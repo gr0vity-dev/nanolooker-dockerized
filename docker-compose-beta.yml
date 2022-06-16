@@ -1,0 +1,57 @@
+version: '3'
+services:
+
+  nanobeta:
+    image: nanocurrency/nano:V23.3
+    command: nano_node daemon --network=beta -l
+    ulimits:
+      nofile: 65535
+    container_name : nanobeta
+    restart: unless-stopped
+    ports:
+     - 54000:54000/udp
+     - 54000:54000
+     - '127.0.0.1:55000:55000'
+     - '127.0.0.1:57000:57000'
+    volumes:
+    - ./LMDB:/root/NanoBeta
+    networks:
+    - nano-beta
+
+  nanobeta_nanolooker_mongo:
+    image: mongo:latest
+    container_name: nanobeta_nanolooker_mongo
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    # ports:
+    #   - 27017:27017
+    volumes: #mongo:latest writes with root and removal is only possible root access
+     - ./.nanobeta_nanolooker_mongo:/data/db
+    networks:
+    - nano-beta
+  
+  nanobeta_nanolooker:  
+    build: 
+      context: ./config
+      dockerfile: ./nanolooker/Dockerfile     
+    command: node /usr/src/app/nanolooker/server/server.js    
+    container_name : nanobeta_nanolooker
+    restart: unless-stopped
+    ports:
+      - 3010:3010
+    environment:
+      - NODE_ENV=production
+      - SERVER_PORT=3010
+      - RPC_DOMAIN=http://nanobeta:55000
+      - WEBSOCKET_DOMAIN=wss://nanolooker.bnano.info/wss
+      - MONGO_USER=root
+      - MONGO_PASSWORD=password
+    networks:
+      - nano-beta
+
+
+networks:
+  nano-beta:
+    driver: bridge
