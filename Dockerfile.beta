@@ -8,9 +8,13 @@ RUN apk add git
 RUN git clone https://github.com/running-coder/nanolooker.git
 WORKDIR /usr/src/app/nanolooker
 
+ARG WS_DOMAIN_ESCAPED
+ARG MONGO_CONTAINER_NAME
+ARG NANOTICKER_STATS_ESCAPED
+
 #replace nanoticker live with beta
-RUN sed -i "s/https:\/\/nanoticker.info\/json\/stats.json/https:\/\/beta.nanoticker.info\/json\/stats-beta.json/g" ./server/cron/nanotickerStats.js
-RUN sed -i 's/localhost:27017/nanobeta_nanolooker_mongo:27017/g' ./server/constants.js
+RUN sed -i "s/https:\/\/nanoticker.info\/json\/stats.json/${NANOTICKER_STATS_ESCAPED}/g" ./server/cron/nanotickerStats.js
+RUN sed -i "s/localhost:27017/${MONGO_CONTAINER_NAME}:27017/g" ./server/constants.js
 #COPY test.txt .env
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
@@ -19,7 +23,7 @@ RUN npm install
 RUN npm run build
 #replace nanolooker websocket with genesis websocket (not properly configurable via env variables)
 #RUN cd dist && sed -i "s/wss:\/\/www.nanolooker.com\/ws/wss:\/\/nanolooker.bnano.info\/wss/g" $(grep -rl wss://www.nanolooker.com/ws ./)
-RUN cd dist && sed -i "s/wss:\/\/www.nanolooker.com\/ws/wss:\/\/nanolooker.bnano.info\/ws/g" $(grep -rl wss://www.nanolooker.com/ws ./)
+RUN cd dist && sed -i "s/wss:\/\/www.nanolooker.com\/ws/${WS_DOMAIN_ESCAPED}/g" $(grep -rl wss://www.nanolooker.com/ws ./)
 
 
 # Bundle app source
